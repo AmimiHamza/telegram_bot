@@ -1,3 +1,3 @@
-greeting=['hello','hi','hey','slm','salam']
-TOKEN: Final='6431996793:AAHq1EkJxXTueR5v_LFTEL-f2spuwcF2MIo'
-BOT_USERNAME: Final='@the_dse_bot'
+TOKEN='#your Token'
+BOT_USERNAME= 'Your bot Username'
+greeting='your greeting list'
