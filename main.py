@@ -2,10 +2,7 @@ from telegram import Update
 from telegram.ext import Application,CommandHandler,MessageHandler,filters,ContextTypes
 from constents import *
 
-
-
-
-# Commands
+# Handle commands
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('Hello, thanks for chatting. This is the bot for DSE students.')
 
@@ -14,12 +11,12 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('This is a custom command.')
+
 # Handle responses
 def handle_response(text: str):
     if text.lower() in greeting:
         return 'Helloooooo, how can I assist u'
     
-
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_type: str = update.message.chat.type
     text: str = update.message.text
@@ -36,8 +33,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('Bot:', response)
     await update.message.reply_text(response)
 
+# Handle errors
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f'Update {update} caused {context.error}')
+
+
 
 if __name__ == '__main__':
     print('Starting...')
