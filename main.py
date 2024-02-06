@@ -1,6 +1,21 @@
 from telegram import Update
 from telegram.ext import Application,CommandHandler,MessageHandler,filters,ContextTypes
 from constents import *
+import sqlite3
+
+conn = sqlite3.connect('courses.db')
+cursor = conn.cursor()
+
+# Creat the database
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS courses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        url TEXT NOT NULL,
+        element TEXT NOT NULL,
+        type TEXT NOT NULL,
+        indice TEXT NOT NULL,
+        state INTEGER NOT NULL);""")
+conn.close()
 
 # Handle commands
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -12,27 +27,51 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('This is a custom command.')
 
-# Handle responses
-def handle_response(text: str):
-    if text.lower() in greeting:
-        return 'Helloooooo, how can I assist u'
-    
+# Handle messages
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_type: str = update.message.chat.type
     text: str = update.message.text
+    sender_id = update.message.chat.id
     print(f'User({update.message.chat.id}) in {message_type}:"{text}"')
-
+    response=''
     if message_type == 'group':
         if BOT_USERNAME in text:
-            new_text: str = text.replace(BOT_USERNAME, '').strip()
-            response: str = handle_response(new_text)
+            text: str = text.replace(BOT_USERNAME, '').strip()
         else:
             return
+    
+    text=text.lower().split()
+    if text[0] in greeting:
+        response: str = 'Helloooooo, how can I assist u'
+    elif text[0]!='get':
+        response: str = f"la commande '{text[0]}' n'existe pas f had lbot"
+    elif text[0] == 'get' and len(text) in [3,4]:
+        course_name, course_type= text[1], text[2]
+        indice=text[3] if len(text)==4 else '%'
+        # Connect to SQLite DB
+        conn = sqlite3.connect('courses.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT url FROM courses WHERE element = ? AND type = ? AND indice LIKE ? AND state = 1", (course_name, course_type, indice))
+        result = cursor.fetchall()
+        conn.close()
+        # Check result and respond
+        if result:
+            for File_URL in result:
+                await send_pdf(sender_id, File_URL[0], context)
+                print(File_URL[0])
+                response = "here is ur pdf ^_^"
+        else:
+            response = "Not found 🙄"
     else:
-        response: str = handle_response(text)
+        response: str = "Invalid Syntax"
     print('Bot:', response)
     await update.message.reply_text(response)
 
+async def send_pdf(chat_id, pdf_url, context):
+    try:
+        await context.bot.send_document(chat_id=chat_id, document=pdf_url)
+    except Exception as e:
+        print(f"Failed to send PDF: {e}")
 # Handle errors
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f'Update {update} caused {context.error}')
