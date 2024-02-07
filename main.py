@@ -57,13 +57,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response=""
     elif  text[0]=='add' and sender_id in administateurs:
         course_name, course_type,index,url= text[1], text[2],text[3],text[4]
-        response=await add_to_db(course_name,course_type,index,url,update)
+        response=await add_to_db(course_name,course_type,index,url)
+    elif  text[0]=='delete' and sender_id in administateurs:
+        course_name, course_type,index,= text[1], text[2],text[3]
+        response=await delete_from_db(course_name,course_type,index)
     else:
         response: str = "Invalid Syntax"
     print('Bot:', response)
     await update.message.reply_text(response)
 
-async def add_to_db(course_name,course_type,index,url,update: Update):
+async def add_to_db(course_name,course_type,index,url):
     # Connect to SQLite DB
     conn = sqlite3.connect('courses.db')
     cursor = conn.cursor()
@@ -71,6 +74,17 @@ async def add_to_db(course_name,course_type,index,url,update: Update):
     conn.commit()
     conn.close()
     response='le pdf est ajouté à la base de données.'
+    return response
+
+async def delete_from_db(course_name,course_type,index):
+    print('tt------------------------')
+    # Connect to SQLite DB
+    conn = sqlite3.connect('courses.db')
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM courses WHERE element=? AND type=? AND indice=? AND state=?", (course_name, course_type, index,1))
+    conn.commit()
+    conn.close()
+    response='le pdf est supprimé de la base de données.'
     return response
 async def show_names(course_name,course_type,update: Update):
     # Connect to SQLite DB
