@@ -3,18 +3,22 @@ from telegram.ext import Application,CommandHandler,MessageHandler,filters,Conte
 from constents import *
 import sqlite3
 
-conn = sqlite3.connect('courses.db')
+TABLE='courses' #the data base will change from a group to another.
+
+dbname=f"{TABLE}.db"
+conn = sqlite3.connect(dbname)
 cursor = conn.cursor()
 
 # Creat the database
-cursor.execute("""
-    CREATE TABLE IF NOT EXISTS courses (
+query=f"""
+    CREATE TABLE IF NOT EXISTS {TABLE} (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         url TEXT NOT NULL,
         element TEXT NOT NULL,
         type TEXT NOT NULL,
         indice TEXT NOT NULL,
-        state INTEGER NOT NULL);""")
+        state INTEGER NOT NULL);"""
+cursor.execute(query)
 conn.close()
 
 # Handle commands
@@ -48,6 +52,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response: str = f"la commande '{text[0]}' n'existe pas f had lbot"
     elif text[0] == 'get' and len(text) in [3,4]:
         course_name, course_type= text[1], text[2]
+        print('waaaaaaaaaaaaa')
         indice=text[3] if len(text)==4 else '%'
         response=await get_pdf(course_name,course_type,indice,sender_id,context)
     elif text[0]=='show' and len(text)<4:
@@ -63,6 +68,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         course_type=text[2] if len(text)==3 else '%'
         index=text[3] if len(text)==4 else '%'
         response=await delete_from_db(course_name,course_type,index)
+    elif  text[0]=='update' and sender_id in administateurs:
+        course_name, course_type,index,url= text[1], text[2],text[3],text[4]
+        await delete_from_db(course_name,course_type,index)
+        await add_to_db(course_name,course_type,index,url)
+        response=f'the url of {course_name}-{course_type}-{index} has been updated.'
     else:
         response: str = "Invalid Syntax"
     print('Bot:', response)
@@ -70,9 +80,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def add_to_db(course_name,course_type,index,url):
     # Connect to SQLite DB
-    conn = sqlite3.connect('courses.db')
+    dbname=f"{TABLE}.db"
+    conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO courses (url,element,type,indice,state) VALUES (?,?,?,?,?)", (url, course_name, course_type, index,1))
+    print(course_name)
+    query=f"INSERT INTO {TABLE} (url,element,type,indice,state) VALUES (?,?,?,?,?)"
+    print(query)
+    cursor.execute(query, (url, course_name, course_type, index,1))
     conn.commit()
     conn.close()
     response='le pdf est ajouté à la base de données.'
@@ -80,18 +94,22 @@ async def add_to_db(course_name,course_type,index,url):
 
 async def delete_from_db(course_name,course_type,index):
     # Connect to SQLite DB
-    conn = sqlite3.connect('courses.db')
+    dbname=f"{TABLE}.db"
+    conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM courses WHERE element LIKE ? AND type LIKE ? AND indice LIKE ? AND state=?", (course_name, course_type, index,1))
+    query=f"DELETE FROM {TABLE} WHERE element LIKE ? AND type LIKE ? AND indice LIKE ? AND state=?"
+    cursor.execute(query, (course_name, course_type, index,1))
     conn.commit()
     conn.close()
     response='le pdf est supprimé de la base de données.'
     return response
 async def show_names(course_name,course_type,update: Update):
     # Connect to SQLite DB
-    conn = sqlite3.connect('courses.db')
+    dbname=f"{TABLE}.db"
+    conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
-    cursor.execute("SELECT element || ' ' || type || ' ' || indice AS course_info FROM courses WHERE element LIKE ? AND type LIKE ? AND state = 1 ORDER BY element ASC", (course_name, course_type))
+    query=f"SELECT element || ' ' || type || ' ' || indice AS course_info FROM {TABLE} WHERE element LIKE ? AND type LIKE ? AND state = 1 ORDER BY element ASC"
+    cursor.execute(query, (course_name, course_type))
     result = cursor.fetchall()
     conn.close()
     # Check result and respond
@@ -105,10 +123,13 @@ async def show_names(course_name,course_type,update: Update):
     return ''
 
 async def get_pdf(course_name,course_type,indice,sender_id,context: ContextTypes.DEFAULT_TYPE):
+    print(course_name)
     # Connect to SQLite DB
-    conn = sqlite3.connect('courses.db')
+    dbname=f"{TABLE}.db"
+    conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
-    cursor.execute("SELECT url FROM courses WHERE element = ? AND type = ? AND indice LIKE ? AND state = 1", (course_name, course_type, indice))
+    query=f"SELECT url FROM {TABLE} WHERE element = ? AND type = ? AND indice LIKE ? AND state = 1"
+    cursor.execute(query, (course_name, course_type, indice))
     result = cursor.fetchall()
     conn.close()
     # Check result and respond
