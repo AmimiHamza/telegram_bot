@@ -59,7 +59,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         course_name, course_type,index,url= text[1], text[2],text[3],text[4]
         response=await add_to_db(course_name,course_type,index,url)
     elif  text[0]=='delete' and sender_id in administateurs:
-        course_name, course_type,index,= text[1], text[2],text[3]
+        course_name= text[1] if len(text)==2 else '%'
+        course_type=text[2] if len(text)==3 else '%'
+        index=text[3] if len(text)==4 else '%'
         response=await delete_from_db(course_name,course_type,index)
     else:
         response: str = "Invalid Syntax"
@@ -77,11 +79,10 @@ async def add_to_db(course_name,course_type,index,url):
     return response
 
 async def delete_from_db(course_name,course_type,index):
-    print('tt------------------------')
     # Connect to SQLite DB
     conn = sqlite3.connect('courses.db')
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM courses WHERE element=? AND type=? AND indice=? AND state=?", (course_name, course_type, index,1))
+    cursor.execute("DELETE FROM courses WHERE element LIKE ? AND type LIKE ? AND indice LIKE ? AND state=?", (course_name, course_type, index,1))
     conn.commit()
     conn.close()
     response='le pdf est supprimé de la base de données.'
