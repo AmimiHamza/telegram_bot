@@ -55,18 +55,29 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         course_type=text[2] if len(text)==3 else '%'
         await show_names(course_name,course_type,update)
         response=""
+    elif  text[0]=='add' and sender_id in administateurs:
+        course_name, course_type,index,url= text[1], text[2],text[3],text[4]
+        response=await add_to_db(course_name,course_type,index,url,update)
     else:
         response: str = "Invalid Syntax"
     print('Bot:', response)
     await update.message.reply_text(response)
 
+async def add_to_db(course_name,course_type,index,url,update: Update):
+    # Connect to SQLite DB
+    conn = sqlite3.connect('courses.db')
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO courses (url,element,type,indice,state) VALUES (?,?,?,?,?)", (url, course_name, course_type, index,1))
+    conn.commit()
+    conn.close()
+    response='le pdf est ajouté à la base de données.'
+    return response
 async def show_names(course_name,course_type,update: Update):
     # Connect to SQLite DB
     conn = sqlite3.connect('courses.db')
     cursor = conn.cursor()
     cursor.execute("SELECT element || ' ' || type || ' ' || indice AS course_info FROM courses WHERE element LIKE ? AND type LIKE ? AND state = 1", (course_name, course_type))
     result = cursor.fetchall()
-    print(result)
     conn.close()
     # Check result and respond
     if result:
