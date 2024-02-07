@@ -91,7 +91,7 @@ async def show_names(course_name,course_type,update: Update):
     # Connect to SQLite DB
     conn = sqlite3.connect('courses.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT element || ' ' || type || ' ' || indice AS course_info FROM courses WHERE element LIKE ? AND type LIKE ? AND state = 1", (course_name, course_type))
+    cursor.execute("SELECT element || ' ' || type || ' ' || indice AS course_info FROM courses WHERE element LIKE ? AND type LIKE ? AND state = 1 ORDER BY element ASC", (course_name, course_type))
     result = cursor.fetchall()
     conn.close()
     # Check result and respond
