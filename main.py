@@ -3,7 +3,7 @@ from telegram.ext import Application,CommandHandler,MessageHandler,filters,Conte
 from constents import *
 import sqlite3
 
-TABLE='courses' #the data base will change from a group to another
+TABLE='courses' #the data base will change from a group to another.
 
 dbname=f"{TABLE}.db"
 conn = sqlite3.connect(dbname)
