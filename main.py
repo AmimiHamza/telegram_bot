@@ -22,7 +22,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('Hello, thanks for chatting. This is the bot for DSE students.')
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Please type GET_TYPE_INDEX.')
+    await update.message.reply_text('you can use:\nGET ELEMENT TYPE INDEX :for getting files\nSHOW ELEMENT TYPE :for listing the files names in the bot\nELEMENT can be like java ,TG...\nTYPE can be cours exam or td\nINDEX can be like 1 2 or 2022 for example')
 
 async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('This is a custom command.')
@@ -34,6 +34,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sender_id = update.message.chat.id
     print(f'User({update.message.chat.id}) in {message_type}:"{text}"')
     response=''
+
     if message_type == 'group':
         if BOT_USERNAME in text:
             text: str = text.replace(BOT_USERNAME, '').strip()
@@ -43,36 +44,56 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text=text.lower().split()
     if text[0] in greeting:
         response: str = 'Helloooooo, how can I assist u'
-    elif text[0]!='get':
+    elif text[0] not in commands:
         response: str = f"la commande '{text[0]}' n'existe pas f had lbot"
     elif text[0] == 'get' and len(text) in [3,4]:
         course_name, course_type= text[1], text[2]
         indice=text[3] if len(text)==4 else '%'
-        # Connect to SQLite DB
-        conn = sqlite3.connect('courses.db')
-        cursor = conn.cursor()
-        cursor.execute("SELECT url FROM courses WHERE element = ? AND type = ? AND indice LIKE ? AND state = 1", (course_name, course_type, indice))
-        result = cursor.fetchall()
-        conn.close()
-        # Check result and respond
-        if result:
-            for File_URL in result:
-                await send_pdf(sender_id, File_URL[0], context)
-                print(File_URL[0])
-                response = "here is ur pdf ^_^"
-        else:
-            response = "Not found 🙄"
+        response=await get_pdf(course_name,course_type,indice,sender_id,context)
+    elif text[0]=='show' and len(text)<4:
+        course_name=text[1] if len(text)==2 else '%'
+        course_type=text[2] if len(text)==3 else '%'
+        await show_names(course_name,course_type,update)
+        response=""
     else:
         response: str = "Invalid Syntax"
     print('Bot:', response)
     await update.message.reply_text(response)
 
-async def send_pdf(chat_id, pdf_url, context):
-    try:
-        await context.bot.send_document(chat_id=chat_id, document=pdf_url)
-    except Exception as e:
-        print(f"Failed to send PDF: {e}")
-# Handle errors
+async def show_names(course_name,course_type,update: Update):
+    # Connect to SQLite DB
+    conn = sqlite3.connect('courses.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT element || ' ' || type || ' ' || indice AS course_info FROM courses WHERE element LIKE ? AND type LIKE ? AND state = 1", (course_name, course_type))
+    result = cursor.fetchall()
+    print(result)
+    conn.close()
+    # Check result and respond
+    if result:
+        for response in result:
+            await update.message.reply_text(response[0])
+    else:
+        response="n'existe pas"
+        await update.message.reply_text(response)
+    
+    return ''
+
+async def get_pdf(course_name,course_type,indice,sender_id,context: ContextTypes.DEFAULT_TYPE):
+    # Connect to SQLite DB
+    conn = sqlite3.connect('courses.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT url FROM courses WHERE element = ? AND type = ? AND indice LIKE ? AND state = 1", (course_name, course_type, indice))
+    result = cursor.fetchall()
+    conn.close()
+    # Check result and respond
+    if result:
+        for File_URL in result:
+            await context.bot.send_document(chat_id=sender_id, document=File_URL[0])
+            response = "here is ur pdf ^_^"
+    else:
+        response = "Not found 🙄"
+    return response
+
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f'Update {update} caused {context.error}')
 
