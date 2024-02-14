@@ -1,0 +1,2 @@
+class StudyMaterialNotFound(Exception):
+    pass
