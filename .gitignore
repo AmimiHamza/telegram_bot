@@ -1,3 +1,7 @@
 constants.py
 courses.db
-__pycache__
+__pycache__/
+venv/
+.env
+*.db
+test.py
