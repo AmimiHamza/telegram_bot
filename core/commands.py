@@ -38,7 +38,7 @@ class BotCommand:
         try:
             links = get_study_material_links(self.db, course_name, course_type, year, part)
             for link in links:
-                await update.message.reply_text(link)
+                await context.bot.send_document(chat_id=update.message.chat_id, document=link)
         except StudyMaterialNotFound as e:
             await update.message.reply_text(str(e))
         
