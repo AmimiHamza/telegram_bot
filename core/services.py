@@ -25,5 +25,5 @@ def get_study_material_links(db: AgentDB,course_name: str, course_type: str, yea
 
 
     if not study_materials:
-        raise StudyMaterialNotFound(f'No study materials found for {course_name} {course_type} {year if year is not None else ""} {part if part is not None else ""}')
+        raise StudyMaterialNotFound(f'No study materials found for {course_name} {course_type} {year if year is not None else ""} {part if part is not None else ""} {session if session is not None else ""}')
     return [material.link for material in study_materials]
