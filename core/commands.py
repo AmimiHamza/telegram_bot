@@ -17,6 +17,7 @@ class BotCommand:
         parser.add_argument('course_type', help='Type of the course')
         parser.add_argument('-p', help='Part', type=int)
         parser.add_argument('-y', help='Year', type=int)
+        parser.add_argument('-s', help='Year', type=str)
 
         # Parse incoming message
         incoming_message: str = update.message.text
@@ -34,10 +35,11 @@ class BotCommand:
         course_type = parsed_args.course_type.upper()
         year = parsed_args.y
         part = parsed_args.p
+        session = parsed_args.s.upper() if parsed_args.s is not None else None
 
         # Get and send study material links
         try:
-            links = get_study_material_links(self.db, course_name, course_type, year, part)
+            links = get_study_material_links(self.db, course_name, course_type, year, part, session)
             for link in links:
                 await context.bot.send_document(chat_id=update.message.chat_id, document=link)
         except StudyMaterialNotFound as e:
