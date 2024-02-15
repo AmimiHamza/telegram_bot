@@ -16,6 +16,10 @@ class MaterialType(PythonEnum):
     EXAM = 'Exam'
     DIVERS = 'Divers'
 
+class Session(PythonEnum):
+    N = 'NORMAL'
+    R = 'RATTRAPAGE'
+
 
 class Course(Base):
     __tablename__ = 'courses'
@@ -33,8 +37,10 @@ class StudyMaterial(Base):
     description = Column(String(255), nullable=True)
     link = Column(String(255), nullable=False, unique=True)
     type = Column(Enum(MaterialType), nullable=False)
-    year = Column(Integer, nullable=False, default=datetime.now().year)
-    part = Column(Integer, nullable=False,default=0)
+    year = Column(Integer)
+    part = Column(Integer)
+    session = Column(Enum(Session))
+
 
     course_id = Column(Integer, ForeignKey('courses.id'))
     course = relationship('Course', back_populates='study_materials')
@@ -56,6 +62,18 @@ class AgentDB:
     def get_study_materials_by_year_and_part(self, course_label, type, year, part):
         return self.session.query(StudyMaterial).join(Course).filter(Course.label==course_label, StudyMaterial.type==type, StudyMaterial.year==year, StudyMaterial.part==part).first()
     
+    def get_study_materials_by_year_and_session(self, course_label, type, year, session):
+        return self.session.query(StudyMaterial).join(Course).filter(Course.label==course_label, StudyMaterial.type==type, StudyMaterial.year==year, StudyMaterial.session==session).all()
+
+    def get_study_materials_by_part_and_session(self, course_label, type, part, session):
+        return self.session.query(StudyMaterial).join(Course).filter(Course.label==course_label, StudyMaterial.type==type, StudyMaterial.part==part, StudyMaterial.session==session).all()
+    
+    def get_study_materials_by_year_session_and_part(self, course_label, type, year, session, part):
+        return self.session.query(StudyMaterial).join(Course).filter(Course.label==course_label, StudyMaterial.type==type, StudyMaterial.year==year, StudyMaterial.session==session, StudyMaterial.part==part).all()
+
+    def get_study_materials_by_session(self, course_label, type, session):
+        return self.session.query(StudyMaterial).join(Course).filter(Course.label==course_label, StudyMaterial.type==type, StudyMaterial.session==session).all()
+    
     def get_study_materials(self, course_label, type):
         return self.session.query(StudyMaterial).join(Course).filter(Course.label==course_label, StudyMaterial.type==type).all()
 
@@ -69,8 +87,8 @@ class AgentDB:
     
         
 
-    def add_study_material(self, course_id, type, year, part, link, description=None):
-        study_material = StudyMaterial(course_id=course_id, type=type, year=year, part=part, link=link, description=description)
+    def add_study_material(self, course_id, type, year, part, session, link, description=None):
+        study_material = StudyMaterial(course_id=course_id, type=type, year=year, part=part, session=session, link=link, description=description)
         self.session.add(study_material)
         self.session.commit()
         return study_material
